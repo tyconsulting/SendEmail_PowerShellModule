@@ -1,0 +1,54 @@
+{
+    "ConnectionFields":  [
+                             {
+                                 "IsEncrypted":  false,
+                                 "IsOptional":  false,
+                                 "Name":  "SMTPServer",
+                                 "TypeName":  "System.String"
+                             },
+                             {
+                                 "IsEncrypted":  false,
+                                 "IsOptional":  false,
+                                 "Name":  "Port",
+                                 "TypeName":  "System.Int32"
+                             },
+                             {
+                                 "IsEncrypted":  false,
+                                 "IsOptional":  false,
+                                 "Name":  "UseSSL",
+                                 "TypeName":  "System.Boolean"
+                             },
+                             {
+                                 "IsEncrypted":  false,
+                                 "IsOptional":  true,
+                                 "Name":  "AuthenticationMethod",
+                                 "TypeName":  "System.String"
+                             },
+                             {
+                                 "IsEncrypted":  false,
+                                 "IsOptional":  true,
+                                 "Name":  "UserName",
+                                 "TypeName":  "System.String"
+                             },
+                             {
+                                 "IsEncrypted":  true,
+                                 "IsOptional":  true,
+                                 "Name":  "Password",
+                                 "TypeName":  "System.String"
+                             },
+                             {
+                                 "IsEncrypted":  false,
+                                 "IsOptional":  false,
+                                 "Name":  "SenderName",
+                                 "TypeName":  "System.String"
+                             },
+                             {
+                                 "IsEncrypted":  false,
+                                 "IsOptional":  false,
+                                 "Name":  "SenderAddress",
+                                 "TypeName":  "System.String"
+                             }
+                         ],
+    "ConnectionTypeName":  "SMTPServerConnection",
+    "IntegrationModuleName":  "SendEmail"
+}
