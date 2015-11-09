@@ -16,14 +16,14 @@ Function Send-Email
  .Parameter -UseSSL
   Whether or not the SMTP serer requires SSL.
 
- .Parameter -AuthMethod
+ .Parameter -AuthenticationMethod
   SMTP Server authentication method. possible values: Anonymous, Integrate or Credential
 
  .Parameter -UserName
-  Specify the user name if SMTP server requires credentials (when AuthMethod is set to Credential).
+  Specify the user name if SMTP server requires credentials (when AuthenticationMethod is set to Credential).
 
  .Parameter -Password
-  Specify the password if SMTP server requires credentials (when AuthMethod is set to Credential).
+  Specify the password if SMTP server requires credentials (when AuthenticationMethod is set to Credential).
 
   .Parameter -SenderName
   Sender name for the email message
@@ -76,7 +76,7 @@ Best Regards,
 Your System
 "@
   $HTMLBody = $false
-  $SendEmail = Send-Email -SMTPServer $SMTPServer -Port $Port -UseSSL $UseSSL -AuthMethod $AuthMethod -SenderName $SenderName -SenderAddress $SenderAddress -To $Recipient -Cc $Cc -Bcc $Bcc -Subject $Subject -Body $Body -HTMLBody $HTMLBody
+  $SendEmail = Send-Email -SMTPServer $SMTPServer -Port $Port -UseSSL $UseSSL -AuthenticationMethod $AuthMethod -SenderName $SenderName -SenderAddress $SenderAddress -To $Recipient -Cc $Cc -Bcc $Bcc -Subject $Subject -Body $Body -HTMLBody $HTMLBody
     
 
  .Example
@@ -84,7 +84,7 @@ Your System
   $SMTPSettings = @{
                     "SMTPServer" = "SMTP.yourcompany.com"
                     "Port" = 25
-                    "AuthMethod" = "Credential"
+                    "AuthenticationMethod" = "Credential"
                     "UserName" = "domain\username"
                     "Password" = "password1234"
                     "UseSSL" = $false
@@ -112,9 +112,9 @@ Your System
         [Parameter (ParameterSetName='SMTPIndividualSettings',Mandatory=$true,HelpMessage='Please specify the SMTP Server FQDN')][string]$SMTPServer,
         [Parameter (ParameterSetName='SMTPIndividualSettings',Mandatory=$true,HelpMessage='Please specify the SMTP Server Port')][Int32]$Port,
         [Parameter (ParameterSetName='SMTPIndividualSettings',Mandatory=$true,HelpMessage='Please specify if the SMTP Server requires SSL')][Boolean]$UseSSL,
-        [Parameter (ParameterSetName='SMTPIndividualSettings',Mandatory=$true,HelpMessage='SMTP Server Authentication Method, Possible value: Anonymous, Integrated, Credential')][ValidateSet('Anonymous', 'Integrated', 'Credential')][string]$AuthMethod,
-        [Parameter (ParameterSetName='SMTPIndividualSettings',Mandatory=$false,HelpMessage='Please specify the user name if the SMTP server requires valid credential')][string]$Username,
-        [Parameter (ParameterSetName='SMTPIndividualSettings',Mandatory=$false,HelpMessage='Please specify the password if the SMTP server requires valid credential')][string]$Password,
+        [Parameter (ParameterSetName='SMTPIndividualSettings',Mandatory=$true,HelpMessage='SMTP Server Authentication Method, Possible value: Anonymous, Integrated, Credential')][ValidateSet('Anonymous', 'Integrated', 'Credential')][string]$AuthenticationMethod,
+        [Parameter (ParameterSetName='SMTPIndividualSettings',Mandatory=$false,HelpMessage='Please specify the user name if the SMTP server requires valid credential')][ValidateScript({if ($AuthenticationMethod -ieq 'credential' -and $_){$true} else {$false}})][string]$Username,
+        [Parameter (ParameterSetName='SMTPIndividualSettings',Mandatory=$false,HelpMessage='Please specify the password if the SMTP server requires valid credential')][ValidateScript({if ($AuthenticationMethod -ieq 'credential' -and $_){$true} else {$false}})][string]$Password,
         [Parameter (ParameterSetName='SMTPIndividualSettings',Mandatory=$true,HelpMessage='Please specify the Sender Name')][string]$SenderName,
         [Parameter (ParameterSetName='SMTPIndividualSettings',Mandatory=$true,HelpMessage='Please specify the Sender Address')][string]$SenderAddress,
         [Parameter (ParameterSetName='SMTPHashTableSettings',Mandatory=$true,HelpMessage='Please specify the SMTP Server settings')][object]$SMTPSettings,
@@ -132,7 +132,7 @@ Your System
         [String]$SMTPServer = $SMTPSettings.SMTPServer
         [Int32]$Port = $SMTPSettings.Port
         [Boolean]$UseSSL = $SMTPSettings.UseSSL
-        [String]$AuthMethod = $SMTPSettings.AuthenticationMethod
+        [String]$AuthenticationMethod = $SMTPSettings.AuthenticationMethod
         [String]$UserName = $SMTPSettings.UserName
         [String]$Password = $SMTPSettings.Password
         [String]$SenderName = $SMTPSettings.SenderName
@@ -142,7 +142,7 @@ Your System
     Write-Verbose "SMTP Server: $SMTPServer"
     Write-Verbose "Port: $Port"
     Write-Verbose "UseSSL: $UseSSL"
-    Write-Verbose "Authentication Method: $AuthMethod"
+    Write-Verbose "Authentication Method: $AuthenticationMethod"
     Write-Verbose "UserName: $UserName"
     Write-Verbose "SenderName: $SenderName"
     Write-Verbose "SenderAddress: $SenderAddress"
@@ -161,7 +161,7 @@ Your System
     }
 
     #Get authentication method
-    Switch ($AuthMethod)
+    Switch ($AuthenticationMethod)
     {
 	    'Anonymous' {$SMTPClient.UseDefaultCredentials = $false}
 	    'Integrated' {$SMTPClient.UseDefaultCredentials = $true}
@@ -209,12 +209,14 @@ Your System
     #Get all attachments
     if ($Attachments)
     {
+        Write-Verbose "Adding attachments."
         $arrAttachments = $Attachments.split(';')
         Foreach ($item in $arrAttachments)
         {
             $MailMessage.Attachments.Add($item)
         }    
     }
-
+    
+    Write-Verbose "Sending email message."
     $SMTPClient.Send($MailMessage)
 }
