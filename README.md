@@ -4,6 +4,9 @@
 
 The SendEmail PowerShell module is a simple module that can be used in PowerShell alone, or in SMA and Azure Automation. Users can either specify individual SMTP server parameters or leveraging the "SMTPServerConnection" connection asset in SMA and Azure Automation.
 
+#Note:
+This module was previously published on Tao Yang's blog: http://blog.tyang.org/2014/10/31/simplified-way-send-emails-mobile-push-notifications-sma/
+
 ##Installation
 
 ### From GitHub Releases
