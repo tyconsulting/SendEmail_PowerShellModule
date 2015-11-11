@@ -19,11 +19,8 @@ Function Send-Email
  .Parameter -AuthenticationMethod
   SMTP Server authentication method. possible values: Anonymous, Integrate or Credential
 
- .Parameter -UserName
-  Specify the user name if SMTP server requires credentials (when AuthenticationMethod is set to Credential).
-
- .Parameter -Password
-  Specify the password if SMTP server requires credentials (when AuthenticationMethod is set to Credential).
+ .Parameter -Credential
+  Specify a PSCredential object if SMTP server requires credentials (when AuthenticationMethod is set to Credential).
 
   .Parameter -SenderName
   Sender name for the email message
@@ -56,7 +53,7 @@ Function Send-Email
   File path for each attachment for the message. for multiple attachments, separate them using ";".
 
  .Example
-  # Send an email message by specifying each individual SMTP setting:
+  # Send an email message by specifying each individual SMTP setting when SMTP supports anonymous autentication:
   $SMTPServer = "SMTP.yourcompany.com"
   $Port = 25
   $AuthMethod = "Anonymous"
@@ -78,7 +75,32 @@ Your System
   $HTMLBody = $false
   $SendEmail = Send-Email -SMTPServer $SMTPServer -Port $Port -UseSSL $UseSSL -AuthenticationMethod $AuthMethod -SenderName $SenderName -SenderAddress $SenderAddress -To $Recipient -Cc $Cc -Bcc $Bcc -Subject $Subject -Body $Body -HTMLBody $HTMLBody
     
+ .Example
+  # Send an email message by specifying each individual SMTP setting when SMTP requires a valid credential:
+  $SMTPServer = "SMTP.yourcompany.com"
+  $Port = 25
+  $AuthMethod = "Credential"
+  $Username = "YourDomain\YourUserName"
+  $SecurePassword = ConvertTo-SecureString "password1234" -AsPlainText -Force
+  $MyPSCred = New-Object System.Management.Automation.PSCredential ($Username, $SecurePassword)
+  $UseSSL = $false
+  $SenderName = "Your System Name"
+  $SenderAddress = "your.system@yourcompany.com"
+  $Recipient = "you@yourcompany.com"
+  $Cc = "user1@yourcompany.com"
+  $Bcc = "user2@yourcompany.com"
+  $Subject = "Greeting from your Automated email script"
+  $Body = @"
+Hello,
 
+this is a system generated message
+
+Best Regards,
+Your System
+"@
+  $HTMLBody = $false
+  $SendEmail = Send-Email -SMTPServer $SMTPServer -Port $Port -UseSSL $UseSSL -AuthenticationMethod $AuthMethod -Credential $MyPSCred -SenderName $SenderName -SenderAddress $SenderAddress -To $Recipient -Cc $Cc -Bcc $Bcc -Subject $Subject -Body $Body -HTMLBody $HTMLBody
+   
  .Example
   # Send an email message by passing a hashtable containing SMTP settings:
   $SMTPSettings = @{
@@ -113,8 +135,7 @@ Your System
         [Parameter (ParameterSetName='SMTPIndividualSettings',Mandatory=$true,HelpMessage='Please specify the SMTP Server Port')][Int32]$Port,
         [Parameter (ParameterSetName='SMTPIndividualSettings',Mandatory=$true,HelpMessage='Please specify if the SMTP Server requires SSL')][Boolean]$UseSSL,
         [Parameter (ParameterSetName='SMTPIndividualSettings',Mandatory=$true,HelpMessage='SMTP Server Authentication Method, Possible value: Anonymous, Integrated, Credential')][ValidateSet('Anonymous', 'Integrated', 'Credential')][string]$AuthenticationMethod,
-        [Parameter (ParameterSetName='SMTPIndividualSettings',Mandatory=$false,HelpMessage='Please specify the user name if the SMTP server requires valid credential')][ValidateScript({if ($AuthenticationMethod -ieq 'Credential'){$_.length -gt 0}})][string]$Username,
-        [Parameter (ParameterSetName='SMTPIndividualSettings',Mandatory=$false,HelpMessage='Please specify the password if the SMTP server requires valid credential')][ValidateScript({if ($AuthenticationMethod -ieq 'Credential'){$_.length -gt 0}})][string]$Password,
+        [Parameter (ParameterSetName='SMTPIndividualSettings',Mandatory=$false,HelpMessage='Please specify a PSCredential object if the SMTP server requires valid credential')][ValidateScript({if ($AuthenticationMethod -ieq 'Credential'){$_}})][PSCredential]$Credential,
         [Parameter (ParameterSetName='SMTPIndividualSettings',Mandatory=$true,HelpMessage='Please specify the Sender Name')][string]$SenderName,
         [Parameter (ParameterSetName='SMTPIndividualSettings',Mandatory=$true,HelpMessage='Please specify the Sender Address')][string]$SenderAddress,
         [Parameter (ParameterSetName='SMTPHashTableSettings',Mandatory=$true,HelpMessage='Please specify the SMTP Server settings')][object]$SMTPSettings,
@@ -137,6 +158,11 @@ Your System
         [String]$Password = $SMTPSettings.Password
         [String]$SenderName = $SMTPSettings.SenderName
         [String]$SenderAddress = $SMTPSettings.SenderAddress
+        If ($UserName -and $Password)
+        {
+            $SecurePassword = ConvertTo-SecureString $Password -AsPlainText -Force
+            $Credential = New-Object System.Management.Automation.PSCredential ($Username, $SecurePassword)
+        }
     }
     Write-Verbose 'SMTP Connection Settings:'
     Write-Verbose "SMTP Server: $SMTPServer"
@@ -167,9 +193,7 @@ Your System
 	    'Integrated' {$SMTPClient.UseDefaultCredentials = $true}
 	    'Credential' {
 		    #$SMTPClient.UseDefaultCredentials = $true
-		    $SMTPUsername = $UserName
-		    $SMTPPassword = $Password
-		    $SMTPClient.Credentials = New-Object System.Net.NetworkCredential($SMTPUsername, $SMTPPassword)
+		    $SMTPClient.Credentials = $Credential.GetNetworkCredential()
 	    }
     }
         $Sender = New-Object System.Net.Mail.MailAddress($SenderAddress, $SenderName)
